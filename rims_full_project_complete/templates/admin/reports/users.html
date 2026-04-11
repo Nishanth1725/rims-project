@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>👥 Users Report</h2>
+        <a href="{{ url_for('reports.index') }}" class="btn btn-secondary">← Back to Reports</a>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card text-center shadow-sm h-100">
+                <div class="card-body">
+                    <h5>Total Users</h5>
+                    <h3 class="text-primary">{{ total_users }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card text-center shadow-sm h-100">
+                <div class="card-body">
+                    <h5>Admins</h5>
+                    <h3 class="text-danger">{{ admin_count }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card text-center shadow-sm h-100">
+                <div class="card-body">
+                    <h5>Customers</h5>
+                    <h3 class="text-info">{{ customer_count }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Customers -->
+    <div class="card mb-4">
+        <div class="card-header bg-dark text-white">
+            <h5>🏆 Top Customers</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Rank</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Orders</th>
+                            <th>Total Spent</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in top_customers %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td><strong>{{ customer.username }}</strong></td>
+                            <td>{{ customer.email }}</td>
+                            <td>{{ customer.order_count }}</td>
+                            <td>₹{{ "%.2f"|format(customer.total_spent or 0) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">No customer data available.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Registrations -->
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            <h5>🆕 Recent Registrations</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Registered</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in recent_users %}
+                        <tr>
+                            <td><strong>{{ user.username }}</strong></td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                {% if user.role == 'admin' %}
+                                    <span class="badge bg-danger">Admin</span>
+                                {% else %}
+                                    <span class="badge bg-primary">Customer</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') if user.created_at else 'N/A' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">No recent registrations.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

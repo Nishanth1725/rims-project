@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="mb-4">Welcome to RIMS</h1>
+
+<div class="row g-4">
+  {% for p in products %}
+    <div class="col-sm-6 col-md-4 col-lg-3">
+      <div class="card h-100 p-3 d-flex flex-column">
+
+        <!-- Product Image -->
+        {% if p.image_filename %}
+          <img src="{{ url_for('static', filename='uploads/' ~ p.image_filename) }}" 
+               class="product-img mb-3" 
+               alt="{{ p.product_name }}" 
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+          <div class="product-img-placeholder mb-3" style="display:none">No Image</div>
+        {% else %}
+          <div class="product-img-placeholder mb-3">No Image</div>
+        {% endif %}
+
+        <!-- Product Details -->
+        <h5 class="mb-2">{{ p.product_name }}</h5>
+        <div class="mb-2"><strong class="text-primary">₹{{ "%.2f"|format(p.unit_price) }}</strong></div>
+        <p class="text-muted mb-3"><small>Stock: {{ p.quantity }}</small></p>
+
+        <!-- Add to Cart -->
+        <div class="d-flex align-items-center mt-auto">
+          <input type="number" 
+                 id="qty{{ p.product_id }}" 
+                 class="form-control form-control-sm me-2" 
+                 value="1" min="1" max="{{ p.quantity }}" 
+                 style="width:70px;">
+          <button class="btn btn-success btn-sm" 
+                  onclick="addToCart({{ p.product_id }}, document.getElementById('qty{{ p.product_id }}').value)">
+            Add to Cart
+          </button>
+        </div>
+
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<script>
+  function addToCart(productId, quantity) {
+    fetch('{{ url_for("cart.add_to_cart") }}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token() }}'
+      },
+      body: JSON.stringify({ product_id: productId, quantity: quantity })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('Product added to cart!');
+      } else {
+        alert('Error: ' + (data.error || 'Could not add to cart.'));
+      }
+    })
+    .catch(err => console.error(err));
+  }
+</script>
+{% endblock %}

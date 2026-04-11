@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4">Product Catalog</h2>
+
+<div class="row">
+  {% for product in products %}
+    <div class="col-md-3 mb-4">
+      <div class="card p-3 h-100 d-flex flex-column">
+
+        <!-- Product Image -->
+        {% if product.image_filename %}
+          <img src="{{ url_for('static', filename='uploads/' ~ product.image_filename) }}"
+               class="product-img mb-3"
+               alt="{{ product.product_name }}"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <div class="product-img-placeholder mb-3" style="display:none;">No Image</div>
+        {% else %}
+          <div class="product-img-placeholder mb-3 d-flex align-items-center justify-content-center" 
+               style="height:150px; background:#f0f0f0;">No Image</div>
+        {% endif %}
+
+        <!-- Product Name & Price -->
+        <h5 class="mb-2">{{ product.product_name }}</h5>
+        <div class="mb-2">
+          <strong class="text-primary">₹{{ "%.2f"|format(product.unit_price) }}</strong>
+        </div>
+        {% if product.category %}
+        <p class="mb-2">
+          <span class="badge bg-secondary" style="font-size: 0.75rem;">{{ product.category.name }}</span>
+        </p>
+        {% endif %}
+        <p class="text-muted mb-3">
+          <small>Stock: {{ product.quantity if (product.quantity is defined and product.quantity is not none) else 'N/A' }}</small>
+        </p>
+
+        <!-- Add to Cart Form -->
+        {% if current_user.is_authenticated %}
+        <form method="post" action="{{ url_for('cart.add_to_cart') }}" class="mt-auto d-flex align-items-center">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="product_id" value="{{ product.product_id }}">
+          <input type="number"
+                 name="quantity"
+                 value="1"
+                 min="1"
+                 max="{{ product.quantity if (product.quantity is defined and product.quantity is not none and product.quantity > 0) else 999 }}"
+                 class="form-control form-control-sm me-2"
+                 style="width:80px;"
+                 required>
+          <button type="submit" class="btn btn-success btn-sm" 
+                  {% if product.quantity is defined and product.quantity is not none and product.quantity <= 0 %}disabled title="Out of stock"{% endif %}>
+            Add to Cart
+          </button>
+        </form>
+        {% else %}
+        <div class="alert alert-info mb-0 mt-auto">
+          <small><a href="{{ url_for('auth.login') }}">Login</a> to add items to cart</small>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

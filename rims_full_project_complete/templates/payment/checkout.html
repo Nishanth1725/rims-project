@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h3 class="mb-4">
+        Checkout
+        {% if buy_now_mode is defined and buy_now_mode %}
+            <span class="badge bg-success ms-2">Buy Now - Single Item</span>
+        {% endif %}
+    </h3>
+
+    <div class="row">
+        <!-- Billing / Payment -->
+        <div class="col-md-7">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="mb-3">Billing Details</h5>
+
+                    <form method="post" action="{{ url_for('payment.checkout_payment') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <h6 class="mb-3">Delivery Address</h6>
+
+                        <div class="mb-3">
+                            <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" name="delivery_name" class="form-control" 
+                                   value="{{ current_user.username if current_user.is_authenticated else '' }}" 
+                                   minlength="2" maxlength="200" required
+                                   placeholder="Enter your full name">
+                            <small class="form-text text-muted">Minimum 2 characters, maximum 200 characters</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Phone Number <span class="text-danger">*</span></label>
+                            <input type="tel" name="delivery_phone" class="form-control" 
+                                   pattern="[0-9]{10}" placeholder="10-digit phone number" 
+                                   minlength="10" maxlength="10" required>
+                            <small class="form-text text-muted">Enter 10-digit phone number (without country code)</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="delivery_email" class="form-control" 
+                                   value="{{ current_user.email if current_user.is_authenticated else '' }}"
+                                   placeholder="your.email@example.com">
+                            <small class="form-text text-muted">Optional - for order updates</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Address Line <span class="text-danger">*</span></label>
+                            <textarea name="delivery_address" class="form-control" rows="3" 
+                                      placeholder="Street address, Building, Apartment number, Landmark" 
+                                      minlength="10" maxlength="500" required></textarea>
+                            <small class="form-text text-muted">Minimum 10 characters, maximum 500 characters</small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">City <span class="text-danger">*</span></label>
+                                <input type="text" name="delivery_city" class="form-control" 
+                                       minlength="2" maxlength="100" required
+                                       placeholder="City name">
+                                <small class="form-text text-muted">Minimum 2 characters</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Pincode <span class="text-danger">*</span></label>
+                                <input type="text" name="delivery_pincode" class="form-control" 
+                                       pattern="[0-9]{6}" placeholder="6-digit pincode" 
+                                       minlength="6" maxlength="6" required>
+                                <small class="form-text text-muted">Enter 6-digit pincode</small>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <h5 class="mb-3">Payment Method</h5>
+                        
+                        {% if not cod_available and not online_available %}
+                        <div class="alert alert-warning">
+                            No payment methods available for this order. Please contact support.
+                        </div>
+                        {% else %}
+                        
+                        {% if online_available %}
+                        <div class="form-check mb-3 border rounded p-3">
+                            <input class="form-check-input" type="radio" name="payment_method" value="online" id="payment_online" {% if not cod_available %}checked{% endif %}>
+                            <label class="form-check-label w-100" for="payment_online">
+                                <strong>Online Payment</strong> (UPI / Bank Transfer)
+                            </label>
+                            <small class="d-block text-muted ms-4 mt-1">
+                                <i class="bi bi-info-circle"></i> A dynamic QR code will be generated with the exact order amount. Scan with PhonePe, GPay, or any UPI app to pay.
+                            </small>
+                            
+                            {% if qr_code_filename %}
+                            <div class="mt-3 ms-4" id="qr_preview_section">
+                                <p class="small mb-2"><strong>QR Code Preview (Sample):</strong></p>
+                                <div class="alert alert-info small">
+                                    Note: A new QR code with your exact order amount (₹{{ "%.2f"|format(total) }}) will be generated after you place the order.
+                                </div>
+                                <img 
+                                    src="{{ url_for('static', filename='qr_codes/' ~ qr_code_filename) }}" 
+                                    alt="QR Code Sample"
+                                    class="img-thumbnail"
+                                    style="max-width: 200px; max-height: 200px; opacity: 0.5;"
+                                    onerror="this.style.display='none';"
+                                >
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        {% if cod_available %}
+                        <div class="form-check mb-3 border rounded p-3">
+                            <input class="form-check-input" type="radio" name="payment_method" value="cod" id="payment_cod" {% if cod_available and not online_available %}checked{% endif %}>
+                            <label class="form-check-label w-100" for="payment_cod">
+                                <strong>Cash on Delivery (COD)</strong>
+                            </label>
+                            <small class="d-block text-muted ms-4 mt-1">
+                                <i class="bi bi-info-circle"></i> Pay when your order is delivered. Order will be marked as "Pending COD".
+                            </small>
+                        </div>
+                        {% endif %}
+                        
+                        {% endif %}
+
+                        <button class="btn btn-success w-100 mt-3" {% if not cod_available and not online_available %}disabled{% endif %}>
+                            Place Order
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="col-md-5">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="mb-3">Order Summary</h5>
+
+                    {% for item in items %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>
+                            {% if item.product %}
+                                {{ item.product.product_name }}
+                            {% else %}
+                                Product #{{ item.product_id }}
+                            {% endif %}
+                            × {{ item.quantity }}
+                        </span>
+                        <span>₹{{ "%.2f"|format(float(item.unit_price or 0) * item.quantity) }}</span>
+                    </div>
+                    {% endfor %}
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong>Subtotal</strong>
+                        <strong>₹{{ "%.2f"|format(total) }}</strong>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Delivery</span>
+                        <span>₹0.00</span>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between">
+                        <h5>Total</h5>
+                        <h5 class="text-primary">
+                            ₹{{ "%.2f"|format(total) }}
+                        </h5>
+                    </div>
+                </div>
+            </div>
+            
+            {% if retailer %}
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="mb-2">Retailer Information</h6>
+                    <p class="mb-1"><strong>{{ retailer.username }}</strong></p>
+                    {% if retailer.email %}
+                    <p class="mb-0 text-muted small">{{ retailer.email }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

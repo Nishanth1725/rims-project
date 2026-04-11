@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h3 class="mb-4">Create Delivery</h3>
+
+    <form method="post" class="card shadow-sm p-4" style="max-width: 520px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="mb-3">
+            <label class="form-label">Product</label>
+            <select name="product_id" class="form-select" required>
+                {% for p in products %}
+                    <option value="{{ p.product_id }}">{{ p.product_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Warehouse</label>
+            <select name="warehouse_id" class="form-select" required>
+                {% for w in warehouses %}
+                    <option value="{{ w.warehouse_id }}">{{ w.warehouse_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label">Quantity</label>
+            <input type="number" name="quantity" class="form-control" value="1" min="1" required>
+        </div>
+
+        <button class="btn btn-primary w-100">
+            Create Delivery
+        </button>
+    </form>
+
+</div>
+{% endblock %}

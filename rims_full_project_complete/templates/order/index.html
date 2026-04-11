@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Orders</h2>
+        <a class="btn btn-primary" href="{{ url_for('order.create') }}">
+            + Create Order
+        </a>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-striped align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Total Amount</th>
+                        <th>Status</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in orders %}
+                    <tr>
+                        <td><strong>#{{ o.order_id }}</strong></td>
+
+                        <td>
+                            {{ o.order_date.strftime('%Y-%m-%d %H:%M') if o.order_date else 'N/A' }}
+                        </td>
+
+                        <td>
+                            ₹{{ "%.2f"|format(o.total_amount) }}
+                        </td>
+
+                        <td>
+                            <span class="badge
+                                {% if o.status == 'completed' %}bg-success
+                                {% elif o.status == 'pending' %}bg-warning text-dark
+                                {% else %}bg-secondary{% endif %}
+                            ">
+                                {{ o.status|capitalize }}
+                            </span>
+                        </td>
+
+                        <td class="text-center">
+                            <a
+                                href="{{ url_for('order.view', order_id=o.order_id) }}"
+                                class="btn btn-sm btn-info"
+                            >
+                                View
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            No orders found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

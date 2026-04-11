@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>🚚 Deliveries</h2>
+        <a class="btn btn-primary" href="{{ url_for('delivery.create') }}">
+            + Create Delivery
+        </a>
+    </div>
+    <!-- Deliveries Table -->
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in items %}
+                    <tr>
+                        <td><strong>#{{ d.delivery_id }}</strong></td>
+
+                        <td>
+                            {{ d.sales_date.strftime('%Y-%m-%d %H:%M:%S') if d.sales_date else 'N/A' }}
+                        </td>
+
+                        <td>
+                            {% if d.status == 'completed' %}
+                                <span class="badge bg-success">Completed</span>
+                            {% elif d.status == 'pending' %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ d.status|capitalize }}</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="text-center">
+                            {% if d.status == 'pending' %}
+                                <form
+                                    method="post"
+                                    action="{{ url_for('delivery.update_status', delivery_id=d.delivery_id) }}"
+                                    class="d-inline"
+                                >
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="status" value="completed">
+
+                                    <button
+                                        type="submit"
+                                        class="btn btn-sm btn-success"
+                                        onclick="return confirm('Mark delivery #{{ d.delivery_id }} as completed?');"
+                                    >
+                                        Mark as Completed
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span class="text-muted">No action</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">
+                            No deliveries found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

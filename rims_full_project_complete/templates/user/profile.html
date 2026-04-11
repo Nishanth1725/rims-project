@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <div class="row">
+    <div class="col-md-8">
+      <h2 class="mb-3">👤 My Profile</h2>
+      <div class="card mt-4">
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label"><strong>Username</strong></label>
+            <input type="text" class="form-control" value="{{ user.username }}" disabled>
+          </div>
+          <div class="mb-3">
+            <label class="form-label"><strong>Email</strong></label>
+            <input type="email" class="form-control" value="{{ user.email or '' }}" disabled>
+          </div>
+          <div class="mb-3">
+            <label class="form-label"><strong>Role</strong></label>
+            <input type="text" class="form-control" value="{{ user.role|capitalize }}" disabled>
+          </div>
+          <div class="mb-3">
+            <label class="form-label"><strong>Member Since</strong></label>
+            <input type="text" class="form-control" value="{{ user.created_at.strftime('%d %b %Y') if user.created_at else 'N/A' }}" disabled>
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            <a href="{{ url_for('user_dashboard.edit_profile') }}" class="btn btn-primary">Edit Profile</a>
+            <a href="{{ url_for('user_dashboard.dashboard') }}" class="btn btn-outline-secondary">Back to Dashboard</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card mt-4">
+        <div class="card-body">
+          <h5 class="card-title">Quick Links</h5>
+          <ul class="list-unstyled">
+            <li class="mb-2"><a href="{{ url_for('user_dashboard.profile') }}" class="text-decoration-none">👤 My Profile</a></li>
+            <li class="mb-2"><a href="{{ url_for('user_dashboard.addresses') }}" class="text-decoration-none">📍 Addresses</a></li>
+            <li class="mb-2"><a href="{{ url_for('user_dashboard.orders') }}" class="text-decoration-none">📦 My Orders</a></li>
+            <li class="mb-2"><a href="{{ url_for('user_dashboard.dashboard') }}" class="text-decoration-none">📊 Dashboard</a></li>
+            <li class="mb-2"><a href="{{ url_for('catalog.catalog') }}" class="text-decoration-none">🛍️ Shop</a></li>
+            <li class="mb-2"><a href="{{ url_for('cart.index') }}" class="text-decoration-none">🛒 Cart</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

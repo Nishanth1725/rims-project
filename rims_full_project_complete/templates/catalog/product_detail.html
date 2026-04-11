@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if product %}
+    <div class="row">
+        <div class="col-md-6">
+            {% if product.image_filename %}
+            <img src="{{ url_for('static', filename='uploads/' ~ product.image_filename) }}" 
+                 alt="{{ product.product_name }}" 
+                 class="img-fluid rounded shadow-sm">
+            {% else %}
+            <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 400px;">
+                <p class="text-muted">No image available</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-6">
+            <h2>{{ product.product_name }}</h2>
+            <p class="text-muted">Product ID: #{{ product.product_id }}</p>
+            
+            {% if product.category %}
+            <p class="mb-2">
+                <span class="badge bg-secondary">Category: {{ product.category.name }}</span>
+            </p>
+            {% endif %}
+            
+            <hr>
+            
+            <h3 class="text-primary">₹{{ "%.2f"|format(product.unit_price) }}</h3>
+            
+            {% if product.product_description %}
+            <div class="mb-4">
+                <h5>Description</h5>
+                <p>{{ product.product_description }}</p>
+            </div>
+            {% endif %}
+            
+            <div class="mb-3">
+                <strong>Stock Available:</strong> 
+                {% if is_in_stock %}
+                    <span class="badge bg-success">{{ product.quantity if product.quantity else total_stock }} units</span>
+                {% else %}
+                    <span class="badge bg-danger">Out of Stock</span>
+                {% endif %}
+            </div>
+            
+            {% if product.delivery_days %}
+            <div class="mb-3">
+                <strong>Delivery Time:</strong> 
+                <span class="badge bg-info">{{ product.delivery_days }} working days</span>
+            </div>
+            {% endif %}
+            
+            <div class="mb-3">
+                <strong>Payment Methods:</strong>
+                {% if product.cod_enabled %}
+                    <span class="badge bg-secondary me-1">Cash on Delivery</span>
+                {% endif %}
+                {% if product.online_payment_enabled %}
+                    <span class="badge bg-primary">Online Payment</span>
+                {% endif %}
+            </div>
+            
+            <hr>
+            
+            {% if is_in_stock and current_user.is_authenticated %}
+            <form method="post" action="{{ url_for('cart.add_to_cart') }}" class="mb-3">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="product_id" value="{{ product.product_id }}">
+                <div class="input-group mb-3" style="max-width: 200px;">
+                    <label class="input-group-text" for="quantity">Quantity:</label>
+                    <input type="number" name="quantity" id="quantity" class="form-control" value="1" min="1" max="{{ product.quantity if product.quantity else 10 }}" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg">
+                    Add to Cart
+                </button>
+            </form>
+            {% elif not current_user.is_authenticated %}
+            <div class="alert alert-info">
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Login to Purchase</a>
+            </div>
+            {% else %}
+            <div class="alert alert-warning">
+                This product is currently out of stock.
+            </div>
+            {% endif %}
+            
+            <a href="{{ url_for('catalog.catalog') }}" class="btn btn-outline-secondary">
+                ← Back to Catalog
+            </a>
+        </div>
+    </div>
+    
+    {% if inventory_items %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <h4>Inventory Details</h4>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Warehouse</th>
+                            <th>Quantity Available</th>
+                            <th>Minimum Stock Level</th>
+                            <th>Reorder Point</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in inventory_items %}
+                        <tr>
+                            <td>{{ item.warehouse.warehouse_name if item.warehouse else 'N/A' }}</td>
+                            <td>{{ item.quantity_available }}</td>
+                            <td>{{ item.minimum_stock_level or 'N/A' }}</td>
+                            <td>{{ item.reorder_point or 'N/A' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <div class="alert alert-danger">
+        Product not found.
+    </div>
+    <a href="{{ url_for('catalog.catalog') }}" class="btn btn-primary">Back to Catalog</a>
+    {% endif %}
+</div>
+{% endblock %}
+
+

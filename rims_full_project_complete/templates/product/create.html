@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3 class="mb-4">Create Product</h3>
+
+    <form method="post" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Product Name -->
+        <div class="mb-3">
+            <label class="form-label">Product Name</label>
+            <input type="text" name="name" class="form-control" required>
+        </div>
+
+        <!-- Price -->
+        <div class="mb-3">
+            <label class="form-label">Price</label>
+            <input type="number" name="price" class="form-control" step="0.01" required>
+        </div>
+
+        <!-- Quantity -->
+        <div class="mb-3">
+            <label class="form-label">Quantity</label>
+            <input type="number" name="quantity" class="form-control" required>
+        </div>
+
+        <!-- Delivery Days -->
+        <div class="mb-3">
+            <label class="form-label">Delivery Time (Working Days)</label>
+            <input type="number" name="delivery_days" class="form-control" value="3" min="1" max="30" required>
+            <small class="form-text text-muted">Number of working days needed to deliver this product (e.g., 3, 5, 7 days)</small>
+        </div>
+
+        <!-- Category -->
+        <div class="mb-3">
+            <label class="form-label">Category</label>
+            <select name="category_id" class="form-select" required>
+                <option value="">-- Select Category --</option>
+                {% for c in categories %}
+                    <option value="{{ c.category_id }}">{{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-control" rows="3"></textarea>
+        </div>
+
+        <!-- Image -->
+        <div class="mb-4">
+            <label class="form-label">Product Image</label>
+            <input type="file" name="image" class="form-control" accept="image/png,image/jpg,image/jpeg,image/gif">
+            <small class="form-text text-muted">Accepted formats: PNG, JPG, JPEG, GIF</small>
+        </div>
+
+        <hr class="my-4">
+
+        <!-- Payment Methods Section -->
+        <h5 class="mb-3">Payment Methods</h5>
+        <p class="text-muted">Select the payment methods available for this product:</p>
+
+        <div class="mb-3">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="payment_methods" value="cod" id="payment_cod" checked>
+                <label class="form-check-label" for="payment_cod">
+                    Cash on Delivery (COD)
+                </label>
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="payment_methods" value="online" id="payment_online">
+                <label class="form-check-label" for="payment_online">
+                    Online Payment (UPI / Bank Transfer)
+                </label>
+            </div>
+        </div>
+
+        <!-- QR Code Upload (shown when Online Payment is selected) -->
+        <div class="mb-4" id="qr_code_section" style="display: none;">
+            <label class="form-label">QR Code Image (Required for Online Payment) <span class="text-danger">*</span></label>
+            <input type="file" name="qr_code" id="qr_code_input" class="form-control" accept="image/png,image/jpg,image/jpeg,image/gif">
+            <small class="form-text text-muted">
+                Upload your UPI QR code or Bank QR code image. Accepted formats: PNG, JPG, JPEG, GIF
+            </small>
+            <div class="mt-2">
+                <img id="qr_preview" src="" alt="QR Code Preview" style="max-width: 200px; max-height: 200px; display: none;" class="img-thumbnail">
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn btn-primary">
+            Create Product
+        </button>
+    </form>
+</div>
+
+<script>
+    // Show/hide QR code section based on Online Payment checkbox
+    document.getElementById('payment_online').addEventListener('change', function() {
+        const qrSection = document.getElementById('qr_code_section');
+        const qrInput = document.getElementById('qr_code_input');
+        if (this.checked) {
+            qrSection.style.display = 'block';
+            qrInput.setAttribute('required', 'required');
+        } else {
+            qrSection.style.display = 'none';
+            qrInput.removeAttribute('required');
+            qrInput.value = '';
+            document.getElementById('qr_preview').style.display = 'none';
+        }
+    });
+
+    // Preview QR code image when selected
+    document.getElementById('qr_code_input').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('qr_preview');
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+{% endblock %}

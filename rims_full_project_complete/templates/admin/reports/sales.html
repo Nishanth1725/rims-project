@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📊 Sales Report</h2>
+        <a href="{{ url_for('reports.index') }}" class="btn btn-secondary">← Back to Reports</a>
+    </div>
+
+    <!-- Filter Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="start_date" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="end_date" class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card text-center shadow-sm h-100">
+                <div class="card-body">
+                    <h5>Total Revenue</h5>
+                    <h3 class="text-success">₹{{ "%.2f"|format(total_revenue) }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card text-center shadow-sm h-100">
+                <div class="card-body">
+                    <h5>Total Orders</h5>
+                    <h3 class="text-primary">{{ total_orders }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card text-center shadow-sm h-100">
+                <div class="card-body">
+                    <h5>Items Sold</h5>
+                    <h3 class="text-info">{{ total_items_sold }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Sales Table -->
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            <h5>Daily Sales Breakdown</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Date</th>
+                            <th>Orders</th>
+                            <th>Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for day in daily_sales %}
+                        <tr>
+                            <td>{{ day.date }}</td>
+                            <td>{{ day.order_count }}</td>
+                            <td>₹{{ "%.2f"|format(day.revenue or 0) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">No sales data for this period.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

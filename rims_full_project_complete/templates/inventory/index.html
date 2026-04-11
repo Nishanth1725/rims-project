@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Inventory</h2>
+        <a href="{{ url_for('inventory.add') }}" class="btn btn-primary">
+            + Add Inventory
+        </a>
+    </div>
+
+    <!-- Inventory Table -->
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-striped align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Product</th>
+                        <th>Warehouse</th>
+                        <th>Quantity</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in inventory %}
+                    <tr>
+                        <td>
+                            <strong>{{ i.product_name }}</strong>
+                        </td>
+                        <td>
+                            {{ i.warehouse_name }}
+                        </td>
+                        <td>
+                            {{ i.quantity }}
+                        </td>
+                        <td>
+                            {% if i.quantity == 0 %}
+                                <span class="badge bg-danger">Out of Stock</span>
+                            {% elif i.quantity < 10 %}
+                                <span class="badge bg-warning text-dark">Low Stock</span>
+                            {% else %}
+                                <span class="badge bg-success">In Stock</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">
+                            No inventory records found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📦 Inventory Report</h2>
+        <a href="{{ url_for('reports.index') }}" class="btn btn-secondary">← Back to Reports</a>
+    </div>
+
+    <!-- Total Inventory Value -->
+    <div class="card mb-4 text-center">
+        <div class="card-body">
+            <h5>Total Inventory Value</h5>
+            <h3 class="text-success">₹{{ "%.2f"|format(total_value) }}</h3>
+        </div>
+    </div>
+
+    <!-- Low Stock & Out of Stock -->
+    <div class="row g-4 mb-4">
+        <!-- Low Stock Items -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-warning text-dark">
+                    <h5>⚠️ Low Stock Items</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Available</th>
+                                    <th>Reorder Point</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for inv in low_stock %}
+                                <tr>
+                                    <td>{{ inv.product.product_name if inv.product else 'N/A' }}</td>
+                                    <td><span class="badge bg-warning">{{ inv.quantity_available }}</span></td>
+                                    <td>{{ inv.reorder_point }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">No low stock items.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Out of Stock Items -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-danger text-white">
+                    <h5>❌ Out of Stock</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Available</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for inv in out_of_stock %}
+                                <tr>
+                                    <td>{{ inv.product.product_name if inv.product else 'N/A' }}</td>
+                                    <td><span class="badge bg-danger">0</span></td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="2" class="text-center text-muted">No out of stock items.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Inventory -->
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            <h5>All Inventory</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Product</th>
+                            <th>Warehouse</th>
+                            <th>Quantity Available</th>
+                            <th>Reorder Point</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for inv in all_inventory %}
+                        <tr>
+                            <td>{{ inv.product.product_name if inv.product else 'N/A' }}</td>
+                            <td>{{ inv.warehouse.warehouse_name if inv.warehouse else 'N/A' }}</td>
+                            <td>{{ inv.quantity_available }}</td>
+                            <td>{{ inv.reorder_point or 'N/A' }}</td>
+                            <td>₹{{ "%.2f"|format((inv.product.unit_price or 0) * inv.quantity_available) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">No inventory data.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

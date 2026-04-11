@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h2 class="mb-4">📄 Payment Receipt</h2>
+
+    <div class="card shadow-sm p-4">
+        {% if order and payment %}
+        <!-- Payment Info -->
+        <div class="mb-4">
+            <h5 class="mb-3">Payment Information</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Payment ID:</strong> #{{ payment.payment_id }}</p>
+                    <p><strong>Order ID:</strong> #{{ order.order_id }}</p>
+                    <p><strong>Order Date:</strong> {{ order.order_date.strftime('%Y-%m-%d %H:%M:%S') if order.order_date else 'N/A' }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Amount:</strong>
+                        <span class="text-success fs-5">
+                            ₹{{ "%.2f"|format(payment.amount) }}
+                        </span>
+                    </p>
+                    <p><strong>Payment Method:</strong> {{ payment.method }}</p>
+                    <p>
+                        <strong>Payment Status:</strong>
+                        {% if payment.status == 'paid' or payment.payment_status == 'paid' %}
+                            <span class="badge bg-success">✓ Paid</span>
+                        {% elif payment.payment_status == 'COD' or payment.status == 'COD' %}
+                            <span class="badge bg-info">Cash on Delivery - Pending</span>
+                            <small class="d-block text-muted mt-1">Payment will be collected on delivery</small>
+                        {% elif payment.status == 'pending' or payment.payment_status == 'pending' %}
+                            <span class="badge bg-warning text-dark">⏳ Pending Payment</span>
+                            {% if payment.method == 'Online Payment' %}
+                            <small class="d-block text-muted mt-1">Please complete payment using QR code</small>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge bg-secondary">{{ payment.payment_status|upper if payment.payment_status else payment.status|upper }}</span>
+                        {% endif %}
+                    </p>
+                    {% if payment.payment_timestamp %}
+                    <p><strong>Payment Marked:</strong> {{ payment.payment_timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    {% endif %}
+                    {% if payment.confirmed_at %}
+                    <p><strong>Confirmed At:</strong> {{ payment.confirmed_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- Order Items -->
+        {% if order.items %}
+        <h5 class="mb-3">Order Items</h5>
+        <div class="table-responsive mb-4">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items %}
+                    <tr>
+                        <td>{{ item.product_name }}</td>
+                        <td>{{ item.order_quantity }}</td>
+                        <td>₹{{ "%.2f"|format(item.unit_price) }}</td>
+                        <td>₹{{ "%.2f"|format(float(item.unit_price or 0) * item.order_quantity) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="3" class="text-end">Total:</th>
+                        <th>₹{{ "%.2f"|format(order.total_amount) }}</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {% endif %}
+
+        <hr>
+
+        <!-- Delivery Information -->
+        {% if order.delivery_name or order.delivery_address %}
+        <div class="mb-4">
+            <h5 class="mb-3">Delivery Information</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    {% if order.delivery_name %}
+                    <p><strong>Name:</strong> {{ order.delivery_name }}</p>
+                    {% endif %}
+                    {% if order.delivery_phone %}
+                    <p><strong>Phone:</strong> {{ order.delivery_phone }}</p>
+                    {% endif %}
+                    {% if order.delivery_email %}
+                    <p><strong>Email:</strong> {{ order.delivery_email }}</p>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    {% if order.delivery_address %}
+                    <p><strong>Address:</strong><br>
+                        {{ order.delivery_address }}<br>
+                        {% if order.delivery_city %}{{ order.delivery_city }}{% endif %}
+                        {% if order.delivery_pincode %}{{ order.delivery_pincode }}{% endif %}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            {% if order.delivery_date %}
+            <div class="alert alert-info mt-3">
+                <strong>Expected Delivery Date:</strong> {{ order.delivery_date.strftime('%A, %B %d, %Y') if order.delivery_date else 'N/A' }}
+                {% if order.delivery_days %}
+                <small class="d-block text-muted">({{ order.delivery_days }} working days from order date)</small>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        <hr>
+        {% endif %}
+
+        <!-- Order Status -->
+        <div class="mb-3">
+            <p><strong>Order Status:</strong>
+                <span class="badge bg-{% if order.status == 'delivered' %}success{% elif order.status == 'shipped' %}info{% elif order.status == 'pending_verification' %}warning{% elif order.status == 'cancelled' %}danger{% else %}secondary{% endif %}">
+                    {{ order.status|upper }}
+                </span>
+            </p>
+        </div>
+
+        {% if payment.method == 'Online Payment' and (payment.payment_status == 'pending' or payment.status == 'pending') %}
+        <div class="alert alert-info">
+            <strong>Next Step:</strong> Please complete the payment using the QR code and confirm it.
+            <a href="{{ url_for('payment.confirm_payment', order_id=order.order_id) }}" class="btn btn-primary btn-sm ms-2">
+                Go to Payment Confirmation
+            </a>
+        </div>
+        {% elif payment.payment_status == 'COD' or payment.status == 'COD' %}
+        <div class="alert alert-info">
+            <strong>Cash on Delivery:</strong> Please keep the exact amount (₹{{ "%.2f"|format(payment.amount) }}) ready for payment upon delivery.
+        </div>
+        {% elif payment.payment_status == 'paid' or payment.status == 'paid' %}
+        <div class="alert alert-success">
+            <strong>✓ Payment Confirmed:</strong> Your payment has been confirmed and your order will be processed. Thank you for your order!
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="mt-4">
+            <a class="btn btn-primary" href="{{ url_for('catalog.catalog') }}">
+                Back to Catalog
+            </a>
+            {% if current_user.is_authenticated %}
+            <a class="btn btn-outline-secondary" href="{{ url_for('user_dashboard.orders') }}">
+                View All Orders
+            </a>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="alert alert-warning">
+            Order or payment information not found.
+        </div>
+        <a class="btn btn-primary" href="{{ url_for('catalog.catalog') }}">
+            Back to Catalog
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

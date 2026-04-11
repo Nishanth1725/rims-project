@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+    .admin-dashboard { color: #ffffff !important; }
+    .admin-dashboard .card { 
+        background: #ffffff !important; 
+        color: #212529 !important; 
+    }
+    .admin-dashboard .card * { color: #212529 !important; }
+    .admin-dashboard .card h5 { color: #212529 !important; font-weight:600; }
+    .payment-badge {
+        font-size: 0.875rem;
+        padding: 0.5rem 1rem;
+    }
+</style>
+
+<div class="admin-dashboard container mt-4">
+    <h2 class="mb-4">💰 Payment Management</h2>
+    
+    <!-- New Payments Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">🔄 New Payments - Pending Verification</h5>
+        </div>
+        <div class="card-body">
+            {% if pending_payments %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Product(s)</th>
+                            <th>Buyer</th>
+                            <th>Amount</th>
+                            <th>Payment Method</th>
+                            <th>Delivery Date</th>
+                            <th>Marked Done At</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in pending_payments %}
+                        {% set order = payment.order %}
+                        {% set customer = order.customer %}
+                        <tr>
+                            <td><strong>#{{ order.order_id }}</strong></td>
+                            <td>
+                                {% for item in order.items[:2] %}
+                                    {{ item.product_name }}{% if item.order_quantity > 1 %} × {{ item.order_quantity }}{% endif %}
+                                    {% if not loop.last %}<br>{% endif %}
+                                {% endfor %}
+                                {% if order.items|length > 2 %}
+                                    <small class="text-muted">+{{ order.items|length - 2 }} more</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if customer %}
+                                    {{ customer.username }}<br>
+                                    <small class="text-muted">{{ customer.email or 'No email' }}</small>
+                                {% else %}
+                                    Guest User
+                                {% endif %}
+                            </td>
+                            <td><strong>₹{{ "%.2f"|format(payment.amount) }}</strong></td>
+                            <td>{{ payment.method }}</td>
+                            <td>
+                                {% if order.delivery_date %}
+                                    <strong>{{ order.delivery_date.strftime('%Y-%m-%d') }}</strong>
+                                    {% if order.delivery_days %}
+                                    <br><small class="text-muted">{{ order.delivery_days }} days</small>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if payment.payment_timestamp %}
+                                    {{ payment.payment_timestamp.strftime('%Y-%m-%d %H:%M') }}
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-warning text-dark payment-badge">
+                                    ⏳ Payment Done - Awaiting Confirmation
+                                </span>
+                            </td>
+                            <td>
+                                <form method="post" action="{{ url_for('admin.confirm_payment', payment_id=payment.payment_id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Confirm payment for Order #{{ order.order_id }}?');">
+                                        ✓ Confirm Payment
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <strong>No pending payments!</strong> All payments are confirmed or no payments have been marked as done yet.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Payment Notifications Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">🔔 Payment Notifications</h5>
+        </div>
+        <div class="card-body">
+            {% if notifications %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Order ID</th>
+                            <th>Buyer</th>
+                            <th>Product</th>
+                            <th>Amount</th>
+                            <th>Payment Method</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for notif in notifications %}
+                        <tr class="{% if not notif.is_read %}table-warning{% endif %}">
+                            <td>{{ notif.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td><strong>#{{ notif.order_id }}</strong></td>
+                            <td>{{ notif.buyer_name or 'N/A' }}</td>
+                            <td>{{ notif.product_name or 'N/A' }}</td>
+                            <td>₹{{ "%.2f"|format(notif.payment_amount or 0) }}</td>
+                            <td>{{ notif.payment_method or 'N/A' }}</td>
+                            <td>
+                                {% if notif.is_read %}
+                                    <span class="badge bg-secondary">Read</span>
+                                {% else %}
+                                    <span class="badge bg-primary">New</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('order.view', order_id=notif.order_id) }}" class="btn btn-primary btn-sm">
+                                    View Order
+                                </a>
+                                {% if not notif.is_read %}
+                                <form method="post" action="{{ url_for('admin.mark_notification_read', notification_id=notif.notification_id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                        Mark Read
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <strong>No notifications!</strong> You will see notifications here when customers mark payments as done.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Order Status Management -->
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0">📦 Recent Orders with Payments</h5>
+        </div>
+        <div class="card-body">
+            {% set orders_with_payments = [] %}
+            {% for notif in notifications[:10] %}
+                {% set order = Order.query.get(notif.order_id) %}
+                {% if order and order not in orders_with_payments %}
+                    {% set orders_with_payments = orders_with_payments + [order] %}
+                {% endif %}
+            {% endfor %}
+            
+            {% if orders_with_payments %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Amount</th>
+                            <th>Payment Status</th>
+                            <th>Order Status</th>
+                            <th>Update Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders_with_payments %}
+                        {% set payments_list = order.payments if order.payments else [] %}
+                        {% set payment = payments_list[0] if payments_list|length > 0 else None %}
+                        {% set customer = order.customer %}
+                        <tr>
+                            <td><strong>#{{ order.order_id }}</strong></td>
+                            <td>{{ order.order_date.strftime('%Y-%m-%d %H:%M') if order.order_date else 'N/A' }}</td>
+                            <td>{{ customer.username if customer else 'Guest' }}</td>
+                            <td>₹{{ "%.2f"|format(order.total_amount) }}</td>
+                            <td>
+                                {% if payment %}
+                                    {% if payment.status == 'paid' or payment.payment_status == 'paid' %}
+                                        <span class="badge bg-success">Paid</span>
+                                    {% elif payment.status == 'pending_verification' %}
+                                        <span class="badge bg-warning text-dark">Pending Verification</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ payment.status|upper }}</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-secondary">No Payment</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{% if order.status == 'delivered' %}success{% elif order.status == 'shipped' %}info{% elif order.status == 'cancelled' %}danger{% else %}warning{% endif %}">
+                                    {{ order.status|upper }}
+                                </span>
+                            </td>
+                            <td>
+                                <form method="post" action="{{ url_for('admin.update_order_status', order_id=order.order_id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <select name="status" class="form-select form-select-sm d-inline-block" style="width: auto;" onchange="this.form.submit()">
+                                        <option value="new" {% if order.status == 'new' %}selected{% endif %}>New</option>
+                                        <option value="confirmed" {% if order.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                                        <option value="paid" {% if order.status == 'paid' %}selected{% endif %}>Paid</option>
+                                        <option value="shipped" {% if order.status == 'shipped' %}selected{% endif %}>Shipped</option>
+                                        <option value="delivered" {% if order.status == 'delivered' %}selected{% endif %}>Delivered</option>
+                                        <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                    </select>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                No recent orders with payments to display.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+            ← Back to Dashboard
+        </a>
+        <a href="{{ url_for('order.index') }}" class="btn btn-primary">
+            View All Orders
+        </a>
+    </div>
+</div>
+{% endblock %}
+
