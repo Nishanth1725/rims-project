@@ -230,5 +230,10 @@ if __name__ == '__main__':
 
     print("=== Flask URL map ===")
     print(app.url_map)
-    app.run(debug=False,use_reloader=False)
-    
+    port = int(os.environ.get("PORT", 10000))
+    app.run(
+        host="0.0.0.0",
+        port=port,
+        debug=False,
+        use_reloader=False
+    )
