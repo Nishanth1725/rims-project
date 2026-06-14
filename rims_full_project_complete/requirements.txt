@@ -6,3 +6,5 @@ psycopg2-binary
 Werkzeug
 qrcode[pil]>=7.0
 Pillow>=9.0
+Flask
+gunicorn
